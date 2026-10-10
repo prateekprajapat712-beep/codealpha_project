@@ -1,0 +1,164 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPQ1jVuZd4KEkKkIU1h2jlt",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/prateekprajapat712-beep/codealpha_project/blob/main/Model%20Deterministic%20-%20stochastic%20environment\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 11,
+      "metadata": {
+        "id": "GxuPjewnMYsc"
+      },
+      "outputs": [],
+      "source": [
+        "import random\n",
+        "import statistics\n",
+        "\n",
+        "random.seed(42)  # reproducible run\n",
+        "\n",
+        "ACTIONS = {'U': (-1, 0), 'D': (1, 0), 'L': (0, -1), 'R': (0, 1)}\n",
+        "\n",
+        "def clamp(v, lo, hi):\n",
+        "    return max(lo, min(v, hi))\n",
+        "\n",
+        "def choose_action(state, goal):\n",
+        "    \"\"\"Simple reflex agent: reduce Manhattan distance to goal.\"\"\"\n",
+        "    r, c = state\n",
+        "    gr, gc = goal\n",
+        "    if r < gr: return 'D'\n",
+        "    if r > gr: return 'U'\n",
+        "    if c < gc: return 'R'\n",
+        "    if c > gc: return 'L'\n",
+        "    return None"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "def step(state, action, grid_size, stochastic=False, p=0.8):\n",
+        "    \"\"\"Deterministic by default. If stochastic=True, the intended\n",
+        "    action succeeds with probability p; otherwise a random action\n",
+        "    is substituted (models environment uncertainty).\"\"\"\n",
+        "    if stochastic and random.random() > p:\n",
+        "        action = random.choice(list(ACTIONS.keys()))\n",
+        "    dr, dc = ACTIONS[action]\n",
+        "    r, c = state\n",
+        "    nr = clamp(r + dr, 0, grid_size - 1)\n",
+        "    nc = clamp(c + dc, 0, grid_size - 1)\n",
+        "    return (nr, nc)"
+      ],
+      "metadata": {
+        "id": "1zv-opvAMuJC"
+      },
+      "execution_count": 12,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def run_episode(grid_size, start, goal, stochastic=False, p=0.8, max_steps=200):\n",
+        "    state = start\n",
+        "    steps = 0\n",
+        "    while state != goal and steps < max_steps:\n",
+        "        action = choose_action(state, goal)\n",
+        "        state = step(state, action, grid_size, stochastic, p)\n",
+        "        steps += 1\n",
+        "    return steps"
+      ],
+      "metadata": {
+        "id": "DVDW3x7KMxxN"
+      },
+      "execution_count": 13,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def run_trials(n, grid_size, start, goal, stochastic=False, p=0.8):\n",
+        "    return [run_episode(grid_size, start, goal, stochastic, p) for _ in range(n)]"
+      ],
+      "metadata": {
+        "id": "Si41PJp0M0Up"
+      },
+      "execution_count": 14,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "if __name__ == \"__main__\":\n",
+        "    GRID_SIZE, START, GOAL, N_RUNS = 5, (0, 0), (4, 4), 20\n",
+        "    det = run_trials(N_RUNS, GRID_SIZE, START, GOAL, stochastic=False)\n",
+        "    sto = run_trials(N_RUNS, GRID_SIZE, START, GOAL, stochastic=True, p=0.8)\n",
+        "    print('Run\\tDeterministic\\tStochastic(p=0.8)')\n",
+        "    for i in range(N_RUNS):\n",
+        "        print(f'{i+1}\\t{det[i]}\\t\\t{sto[i]}')\n",
+        "    print('Deterministic mean:', statistics.mean(det), 'stdev:', statistics.pstdev(det))\n",
+        "    print('Stochastic    mean:', statistics.mean(sto), 'stdev:', statistics.pstdev(sto))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "eq6T2jsjM3jc",
+        "outputId": "f0e29b2e-e352-4949-eefb-9c091b8dc2ec"
+      },
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Run\tDeterministic\tStochastic(p=0.8)\n",
+            "1\t8\t\t10\n",
+            "2\t8\t\t8\n",
+            "3\t8\t\t9\n",
+            "4\t8\t\t11\n",
+            "5\t8\t\t8\n",
+            "6\t8\t\t13\n",
+            "7\t8\t\t9\n",
+            "8\t8\t\t9\n",
+            "9\t8\t\t14\n",
+            "10\t8\t\t9\n",
+            "11\t8\t\t8\n",
+            "12\t8\t\t10\n",
+            "13\t8\t\t8\n",
+            "14\t8\t\t8\n",
+            "15\t8\t\t9\n",
+            "16\t8\t\t12\n",
+            "17\t8\t\t13\n",
+            "18\t8\t\t10\n",
+            "19\t8\t\t8\n",
+            "20\t8\t\t10\n",
+            "Deterministic mean: 8 stdev: 0.0\n",
+            "Stochastic    mean: 9.8 stdev: 1.833030277982336\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
